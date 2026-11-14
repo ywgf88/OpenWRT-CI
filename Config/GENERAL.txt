@@ -58,3 +58,8 @@ CONFIG_PACKAGE_openssh-keygen=y
 CONFIG_PACKAGE_openssh-sftp-server=y
 CONFIG_PACKAGE_openssl-util=y
 CONFIG_PACKAGE_xz-utils=y
+
+#关闭 SONiC 全锥形 NAT 的 LuCI 页面
+#该包是 LUCI_DEFAULT:=y if PACKAGE_luci-app-firewall 自动带进来的，配置里并没有显式启用；
+#关掉后它依赖的 fullconenat-sonic 内核模块与中文语言包也会一并去掉
+# CONFIG_PACKAGE_luci-app-fullconenat-sonic is not set

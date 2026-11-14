@@ -74,16 +74,16 @@
 
 | 分类 | 主要包 |
 | --- | --- |
-| 代理 / 分流 | `luci-app-homeproxy`、`sing-box`（在设备 config 中启用）、`luci-app-natmapt`、`luci-app-fullconenat-sonic`（仅界面，内核模块 `fullconenat-sonic` 已移除） |
+| 代理 / 分流 | `luci-app-homeproxy`、`sing-box`（在设备 config 中启用）、`luci-app-natmapt` |
 | 系统 / 运维 | `luci-app-autoreboot`、`luci-app-upnp`、`luci-app-wolultra`、`htop`、`iperf3`、`curl`、`ip-full`、`lsblk`、`nand-utils`、`xz-utils`、`openssh-sftp-server` |
 | 内核模块 | `kmod-nft-*`（core / nat / offload / tproxy / queue / socket / fib 等）、`kmod-wireguard`、`kmod-tun`、`kmod-mtd-rw`、`kmod-dsa`、`kmod-inet-diag` |
 | 构建开关 | `CONFIG_CCACHE=y`、`CONFIG_DEVEL=y`、`CONFIG_TARGET_MULTI_PROFILE=y`、`CONFIG_TARGET_PER_DEVICE_ROOTFS=y`；关闭 `luci-app-attendedsysupgrade`、`luci-app-wol` 与 `video` / `pon_*` feed |
 | 已移除（无对应硬件） | USB 与存储栈（`kmod-usb-*` 全系、`kmod-usb-storage*`、`usbutils`、`usb-modeswitch`、`libimobiledevice`、`usbmuxd`）、`kmod-ata-*`、`kmod-nvme`、`kmod-fs-btrfs`、`kmod-fs-ksmbd`、`mmc-utils`、`smartmontools`、`nvme-cli`、`kmod-sound-core`、`kmod-usb-audio`、`kmod-bonding`、`kmod-veth`、`coremark` |
-| 已移除（插件与磁盘工具） | `luci-app-samba4`、`luci-app-partexp`、`luci-app-mini-diskmanager`、`luci-app-gecoosac`、`stuntman-client`、`luci-proto-relay`、`fullconenat-sonic`；`automount`、`blkid`、`cfdisk`、`fdisk`、`sfdisk`、`cgdisk`、`gdisk`、`sgdisk`、`exfat-fsck`、`exfat-mkfs`、`kmod-fuse` |
+| 已移除（插件与磁盘工具） | `luci-app-samba4`、`luci-app-partexp`、`luci-app-mini-diskmanager`、`luci-app-gecoosac`、`stuntman-client`、`luci-proto-relay`、`fullconenat-sonic`、`luci-app-fullconenat-sonic`；`automount`、`blkid`、`cfdisk`、`fdisk`、`sfdisk`、`cgdisk`、`gdisk`、`sgdisk`、`exfat-fsck`、`exfat-mkfs`、`kmod-fuse` |
 
 **最近一次 Release 实际装入的 LuCI 应用**（取自 manifest，随上游变动，以 Release 说明的「插件列表」为准）
 
-`luci-app-autoreboot` · `firewall` · `fullconenat-sonic` · `homeproxy` · `natmapt` · `package-manager` · `qca-ppe-qos` · `router-tool` · `upnp` · `vantage` · `wolultra`，主题 `luci-theme-vantage`（2026-11-14 22:05 产物，manifest 共 **322** 个包；精简前为 377 个）。
+`luci-app-autoreboot` · `firewall` · `fullconenat-sonic` · `homeproxy` · `natmapt` · `package-manager` · `qca-ppe-qos` · `router-tool` · `upnp` · `vantage` · `wolultra`，主题 `luci-theme-vantage`（2026-11-14 22:05 产物，manifest 共 **322** 个包；精简前为 377 个。该产物之后的提交已显式关闭 `luci-app-fullconenat-sonic`，故新镜像不再包含该页与其 `fullconenat-sonic` 内核模块）。
 
 **`Scripts/Packages.sh` 预置的第三方源**（`UPDATE_PACKAGE` 会先删除 feeds 中的同名目录、再按指定分支克隆到 `package/`，避免版本冲突；是否进入固件仍由 `.config` 决定）
 
