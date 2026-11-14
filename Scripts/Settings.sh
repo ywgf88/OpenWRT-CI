@@ -59,8 +59,9 @@ fi
 CI_FILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Files"
 if [ -d "$CI_FILES" ]; then
 	install -d ./package/base-files/files/etc/init.d ./package/base-files/files/etc/uci-defaults
-	install -m 0755 "$CI_FILES/etc/init.d/mtd19-data" ./package/base-files/files/etc/init.d/mtd19-data
-	install -m 0755 "$CI_FILES/etc/uci-defaults/99-mtd19-data" ./package/base-files/files/etc/uci-defaults/99-mtd19-data
-	sed -i 's/\r$//' ./package/base-files/files/etc/init.d/mtd19-data ./package/base-files/files/etc/uci-defaults/99-mtd19-data
-	echo "mtd19-data installed!"
+	for f in etc/init.d/mtd19-data etc/uci-defaults/99-mtd19-data etc/init.d/homeproxy-ram etc/uci-defaults/97-ram-tune; do
+		install -m 0755 "$CI_FILES/$f" "./package/base-files/files/$f"
+	done
+	sed -i 's/\r$//' ./package/base-files/files/etc/init.d/mtd19-data ./package/base-files/files/etc/uci-defaults/99-mtd19-data ./package/base-files/files/etc/init.d/homeproxy-ram ./package/base-files/files/etc/uci-defaults/97-ram-tune
+	echo "mtd19-data + ram-tune installed!"
 fi

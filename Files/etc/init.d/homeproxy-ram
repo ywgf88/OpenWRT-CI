@@ -1,0 +1,34 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: MIT
+#
+# 把 homeproxy 的看板资源（约 8MiB）重定向到内存盘 /tmp，
+# 避免它每次启动都往 /overlay 落盘、吃掉有限的 overlay 空间。
+#
+# 本机 1G 内存，占用 8MiB RAM 换 8MiB flash 是划算的。
+# 不动 homeproxy 本体与配置，失败也不影响启动。
+
+START=15
+STOP=85
+
+DASH=/etc/homeproxy/dashboard
+RAM_DASH=/tmp/homeproxy-dashboard
+
+start() {
+	[ -d /etc/homeproxy ] || return 0
+	mkdir -p "$RAM_DASH" 2>/dev/null || return 0
+
+	# 已经是软链就不再处理（避免每次开机 rm -rf）
+	[ -L "$DASH" ] && return 0
+
+	rm -rf "$DASH" 2>/dev/null
+	if ln -sfn "$RAM_DASH" "$DASH"; then
+		logger -t homeproxy-ram "dashboard redirected to $RAM_DASH"
+	else
+		logger -t homeproxy-ram "symlink failed, keep original path"
+		return 1
+	fi
+}
+
+stop() {
+	:
+}

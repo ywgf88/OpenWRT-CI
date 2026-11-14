@@ -33,6 +33,8 @@
 * **镜像体积（2026-11-14 实测）**：`squashfs-sysupgrade.bin` 54.49 MiB → **40.96 MiB（−13.53 MiB）**；`squashfs-factory.ubi` 56.62 MiB → **42.62 MiB（−14.00 MiB）**。
 * **删驱动的收益极小，删插件的收益极大**：单项 kmod 只有几 KB~几十 KB，本次 −13.5 MiB 几乎全部来自插件依赖链。要压体积优先动插件，别动 kmod。
 * **overlay ≈ 72 MiB − squashfs 镜像体积 − UBI 开销**：镜像每减 1 MiB，`/overlay` 约增 1 MiB（实测 −2.15 MiB 镜像换来 +2.1 MiB overlay）。本次预计 overlay 由 9.2 MiB 增至 **约 23 MiB**。
+* **1G 内存调优（随固件首启生效）**：`Files/etc/uci-defaults/97-ram-tune` 把 dnsmasq 缓存 1500 → 8192、日志环缓冲 → 128KB、内核 `rmem/wmem` 提到 16 MiB、`nf_conntrack_max` 提到 65536；`Files/etc/init.d/homeproxy-ram` 把 homeproxy 看板（约 8 MiB）重定向到 `/tmp`，**用 8 MiB 内存换 8 MiB flash**。
+* **不要做 swap / zram**：本机无盘，1G 内存长期用不满，压缩内存是负收益；`/tmp` 也不要塞大文件，默认只占内存一半。
 
 > 未启用 `passwall2`；`luci-app-homeproxy` + `sing-box` 保留。注意 `luci-app-homeproxy` 首次启动会把约 8 MiB 看板资源写进 overlay，可用空间会突然下降，必要时把 `/etc/homeproxy/dashboard` 软链到 `/mnt/data`。
 
@@ -104,6 +106,7 @@
 | 主题与菜单修补 | `Scripts/Handles.sh` | Argon 配色/背景、Aurora 下拉菜单、Vantage 进度条字体、mini-diskmanager 与 natmapt 菜单位置；用 `FIX` 守卫，目录不存在时自动跳过 |
 | 高通平台 | `Settings.sh` | 配置名含 `WIFI-NO` 时把 DTS 引用切到 `ipq6018/ipq8074-nowifi.dtsi` 以缩小 Q6 固件 |
 | 闲置分区挂载 | `Scripts/Settings.sh` + `Files/` | 把 `Files/etc/init.d/mtd19-data`、`Files/etc/uci-defaults/99-mtd19-data` 安装进 `package/base-files/files/`，开机把 mtd19 建成 UBI 卷挂到 `/mnt/data` |
+| 内存调优 | `Files/etc/uci-defaults/97-ram-tune` + `Files/etc/init.d/homeproxy-ram` | 首启一次：dnsmasq `cachesize=8192`、`log_size=128`、sysctl 网络缓冲与 conntrack；每boot：homeproxy 看板软链到 `/tmp/homeproxy-dashboard` |
 
 `IPv4-Default.sh` 在 `make defconfig` 之前执行，核心是让生成器跳过 IPv6 分支，并用首启脚本兜底清理：
 
