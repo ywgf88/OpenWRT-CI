@@ -65,6 +65,8 @@ df -h /mnt/data
 
 **重建后实测**：`ubimkvol` 报 `size 269 LEBs (34156544 bytes, 32.5 MiB)`，即把 36.6 MiB 分区的可用 LEB 吃到 269 个（其余为 UBI 保留与坏块）。空卷 `df` 显示 `28.2M / 24.0K / 26.7M` —— UBIFS 报给 statfs 的口径已扣除索引与保留空间，**32.5 MiB 是卷的物理容量，28.2M 是 `df` 视角的总量**，两者不是矛盾。
 
+**自动挂载复测**：`umount /mnt/data` 后执行 `/etc/init.d/mtd19-data restart`，脚本能自行重新挂上（无需手工 `mount`），说明开机路径可用。`mount` 输出里的 `assert=read-only` 是 UBIFS 的内部标志，实际挂载仍是 `rw`。
+
 ## 编译流水线
 
 | Workflow | 触发方式 | 作用 |
