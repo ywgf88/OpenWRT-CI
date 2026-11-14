@@ -33,7 +33,7 @@
 * **有些包删配置行没用**：`luci-app-fullconenat-sonic` 和 `fullconenat-sonic` 的 Makefile 里都写了 `DEFAULT:=y if … firewall`，只要 firewall 在就自动启用；要去掉必须在 `.config` 里显式写 `# CONFIG_PACKAGE_xxx is not set`。
 * **镜像体积（2026-11-14 实测）**：`squashfs-sysupgrade.bin` 54.49 MiB → **40.96 MiB（−13.53 MiB）**；`squashfs-factory.ubi` 56.62 MiB → **42.62 MiB（−14.00 MiB）**。
 * **删驱动的收益极小，删插件的收益极大**：单项 kmod 只有几 KB~几十 KB，本次 −13.5 MiB 几乎全部来自插件依赖链。要压体积优先动插件，别动 kmod。
-* **overlay ≈ 72 MiB − squashfs 镜像体积 − UBI 开销**：镜像每减 1 MiB，`/overlay` 约增 1 MiB（实测 −2.15 MiB 镜像换来 +2.1 MiB overlay）。本次预计 overlay 由 9.2 MiB 增至 **约 23 MiB**。
+* **overlay ≈ 72 MiB − squashfs 镜像体积 − UBI 开销**：镜像每减 1 MiB，`/overlay` 约增 1 MiB（实测 −2.15 MiB 镜像换来 +2.1 MiB overlay）。40.96 MiB 镜像刷入后 **`/overlay` 实测 21.7 MiB（可用 20.5 MiB）**，此前为 9.2 MiB。
 * **1G 内存调优（随固件首启生效）**：`Files/etc/uci-defaults/97-ram-tune` 把 dnsmasq 缓存 1500 → 8192、日志环缓冲 → 128KB、内核 `rmem/wmem` 提到 16 MiB、`nf_conntrack_max` 提到 65536；`Files/etc/init.d/homeproxy-ram` 把 homeproxy 看板（约 8 MiB）重定向到 `/tmp`，**用 8 MiB 内存换 8 MiB flash**。
 * **不要做 swap / zram**：本机无盘，1G 内存长期用不满，压缩内存是负收益；`/tmp` 也不要塞大文件，默认只占内存一半。
 
@@ -48,6 +48,20 @@
 * 保护措施：仅对 `redmi,ax5` 生效（按 `/tmp/sysinfo/board_name` 判定）；用 `/sys/class/ubi/ubi1` 判断是否已 attach，**只在分区没有 UBI 头时格式化一次**；`/dev` 为 tmpfs 时按 `/sys` 设备号补建节点；任一步失败只写日志，不阻塞启动。
 * 不改分区表、不动 ubi0、不需要 `mkfs.ubifs`（空卷首次挂载由内核初始化 UBIFS）。
 * 刷机建议：**用 `factory.ubi` 走不死 uboot 网页刷**，UBI 卷会按新镜像重建、overlay 才会真正扩大；直接 sysupgrade 可能沿用旧卷大小。
+* **运行实测（2026-11-14 刷入后）**：`/mnt/data` 已挂载 `ubi1_0`，`/dev` 下出现 `ubi1`、`ubi1_0`；`/overlay` 21.7 MiB。
+* **注意 1｜旧卷不会被自动清空**：脚本的安全策略是“分区有 UBI 头就不格式化”。如果这块分区里还留着别的固件（例如 QWRT）建的旧卷，就会直接挂旧卷——实测只剩 28.2 MiB 且带 2020 年的旧数据（`etc` / `userdisk` / `usr`）。要拿满额空间需手工重建，见下。
+* **注意 2｜可能被挂两次**：同一卷可能同时出现在 `/mnt/data` 与 `/mnt/ubi1_0`（后者是系统自动挂载），不影响使用。
+* **注意 3｜`logread | grep mtd-data` 可能为空**：`uci-defaults` 在 `logd` 启动前执行，`logger` 消息会被丢掉。验证请看 `mount | grep mnt/data` 或 `dmesg | grep -i ubifs`。
+
+重建满额数据卷（会清掉旧数据，按需执行）：
+
+```sh
+umount /mnt/data /mnt/ubi1_0 2>/dev/null
+ubirmvol /dev/ubi1 -n 0
+ubimkvol /dev/ubi1 -N data -m          # -m 取分区最大空间，约 35 MiB
+mount -t ubifs ubi1_0 /mnt/data
+df -h /mnt/data
+```
 
 ## 编译流水线
 
