@@ -51,7 +51,26 @@
 * **运行实测（2026-11-14 刷入后）**：`/mnt/data` 已挂载 `ubi1_0`，`/dev` 下出现 `ubi1`、`ubi1_0`；`/overlay` 21.7 MiB。
 * **注意 1｜旧卷不会被自动清空**：脚本的安全策略是“分区有 UBI 头就不格式化”。如果这块分区里还留着别的固件（例如 QWRT）建的旧卷，就会直接挂旧卷——实测只剩 28.2 MiB 且带 2020 年的旧数据（`etc` / `userdisk` / `usr`）。要拿满额空间需手工重建，见下。
 * **注意 2｜可能被挂两次**：同一卷可能同时出现在 `/mnt/data` 与 `/mnt/ubi1_0`（后者是系统自动挂载），不影响使用。
-* **注意 3｜`logread | grep mtd-data` 可能为空**：`uci-defaults` 在 `logd` 启动前执行，`logger` 消息会被丢掉。验证请看 `mount | grep mnt/data` 或 `dmesg | grep -i ubifs`。
+* **注意 3｜`logread | grep mtd-data` 可能为空**：`logd` 在 `START=12` 启动，而挂载在 `START=99`，且 `log_size` 是 `logd` **启动时**读取的——改配置不会立刻生效，开机日志量大时早期几行会被默认的小环形缓冲冲掉。验证请看 `mount | grep mnt/data` 或 `dmesg | grep -i ubifs`。
+
+### 日志持久化到 `/mnt/data`
+
+`logd` 比挂载早启动，冷启动时 `/mnt/data/log/messages` 还不存在（实测 `logd` 会退回 RAM 环形缓冲、不会崩溃）。因此脚本在挂载成功后会做三件事：
+
+1. `mkdir -p /mnt/data/log`
+2. 把环形缓冲里的开机日志写成 `/mnt/data/log/boot.log`（上一次的自动转存为 `boot.prev.log`）
+3. 若 `system.log_type='file'`，重启 `logd` 让它改用 `/mnt/data/log/messages`，并打一条 `boot log saved` 便于自检
+
+关机时（`stop()`，K10 顺序）再把本次运行日志写成 `/mnt/data/log/shutdown.log`。
+
+手动启用持久日志：
+
+```sh
+mkdir -p /mnt/data/log
+uci set system.@system[0].log_file='/mnt/data/log/messages'
+uci set system.@system[0].log_type='file'
+uci commit system; /etc/init.d/log restart
+```
 
 重建满额数据卷（会清掉旧数据，按需执行）：
 
