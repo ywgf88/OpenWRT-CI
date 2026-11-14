@@ -58,10 +58,12 @@
 ```sh
 umount /mnt/data /mnt/ubi1_0 2>/dev/null
 ubirmvol /dev/ubi1 -n 0
-ubimkvol /dev/ubi1 -N data -m          # -m 取分区最大空间，约 35 MiB
+ubimkvol /dev/ubi1 -N data -m          # -m 取分区最大空间
 mount -t ubifs ubi1_0 /mnt/data
 df -h /mnt/data
 ```
+
+**重建后实测**：`ubimkvol` 报 `size 269 LEBs (34156544 bytes, 32.5 MiB)`，即把 36.6 MiB 分区的可用 LEB 吃到 269 个（其余为 UBI 保留与坏块）。空卷 `df` 显示 `28.2M / 24.0K / 26.7M` —— UBIFS 报给 statfs 的口径已扣除索引与保留空间，**32.5 MiB 是卷的物理容量，28.2M 是 `df` 视角的总量**，两者不是矛盾。
 
 ## 编译流水线
 
