@@ -29,6 +29,15 @@ mtd_size() {
 	awk -v k="mtd$1:" '$1 == k { print $2 }' /proc/mtd
 }
 
+# /dev 若是普通 tmpfs，内核新建的 UBI 节点不会自动出现，按 /sys 里的设备号补建
+make_node() {
+	[ -e "$2" ] && return 0
+	DEV=$(cat "/sys/class/ubi/$1/dev" 2>/dev/null)
+	[ -n "$DEV" ] || return 1
+	mknod "$2" c "${DEV%%:*}" "${DEV##*:}" 2>/dev/null
+	[ -e "$2" ]
+}
+
 start() {
 	[ -e /proc/mtd ] || return 0
 
@@ -48,22 +57,28 @@ start() {
 	mkdir -p "$DATA_MNT"
 	grep -q " $DATA_MNT " /proc/mounts && return 0
 
-	if [ ! -e "/dev/ubi$UBI_DEV" ]; then
-		if ! ubiattach -m "$MTD" -d "$UBI_DEV" >/dev/null 2>&1; then
-			# 分区上还没有 UBI 头，首次格式化（只影响这块闲置分区）
-			logger -t mtd-data "mtd$MTD has no ubi header, formatting once"
-			ubiformat -q -y "/dev/mtd$MTD" >/dev/null 2>&1 || {
-				logger -t mtd-data "ubiformat failed"
-				return 1
-			}
-			ubiattach -m "$MTD" -d "$UBI_DEV" >/dev/null 2>&1 || {
-				logger -t mtd-data "ubiattach failed"
-				return 1
-			}
-		fi
+	# 以 /sys/class/ubi 是否存在为准判断是否已 attach，避免误判后格式化
+	[ -d "/sys/class/ubi/ubi$UBI_DEV" ] || ubiattach -m "$MTD" -d "$UBI_DEV" >/dev/null 2>&1
+
+	if [ ! -d "/sys/class/ubi/ubi$UBI_DEV" ]; then
+		# 分区上还没有 UBI 头，首次格式化（只影响这块闲置分区）
+		logger -t mtd-data "mtd$MTD has no ubi header, formatting once"
+		ubiformat -q -y "/dev/mtd$MTD" >/dev/null 2>&1 || {
+			logger -t mtd-data "ubiformat failed"
+			return 1
+		}
+		ubiattach -m "$MTD" -d "$UBI_DEV" >/dev/null 2>&1
+		[ -d "/sys/class/ubi/ubi$UBI_DEV" ] || {
+			logger -t mtd-data "ubiattach failed"
+			return 1
+		}
 	fi
 
+	make_node "ubi$UBI_DEV" "/dev/ubi$UBI_DEV"
+	[ -e "/dev/ubi$UBI_DEV" ] || { logger -t mtd-data "ubi$UBI_DEV not available"; return 1; }
+
 	[ -e "/dev/ubi${UBI_DEV}_0" ] || ubimkvol "/dev/ubi$UBI_DEV" -N "$VOL_NAME" -m >/dev/null 2>&1
+	make_node "ubi${UBI_DEV}_0" "/dev/ubi${UBI_DEV}_0"
 	[ -e "/dev/ubi${UBI_DEV}_0" ] || { logger -t mtd-data "mkvol failed"; return 1; }
 
 	# 空卷首次挂载时由内核自动初始化 UBIFS，无需 mkfs.ubifs
