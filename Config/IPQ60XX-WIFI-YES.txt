@@ -4,6 +4,5 @@ CONFIG_TARGET_qualcommax_ipq60xx=y
 #设备列表
 CONFIG_TARGET_DEVICE_qualcommax_ipq60xx_DEVICE_redmi_ax5=y
 
-# ===== custom: 科学插件 =====
-# sing-box 同时服务 HomeProxy 与 PassWall2（PassWall2 用 SingBox 核心，不引入 xray-core）
+# ===== custom: 科学插件（仅保留 HomeProxy 所需 sing-box，移除 passwall2/xray-core 以压缩固件体积） =====
 CONFIG_PACKAGE_sing-box=y
