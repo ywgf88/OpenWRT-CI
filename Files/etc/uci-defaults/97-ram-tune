@@ -34,7 +34,7 @@ fi
 
 # 日志环缓冲（KB），方便排查又不写盘
 if uci -q get system.@system[0] >/dev/null 2>&1; then
-	uci -q set system.@system[0].log_size='128'
+	uci -q set system.@system[0].log_size='256'
 	uci -q commit system
 fi
 

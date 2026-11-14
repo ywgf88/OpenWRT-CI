@@ -72,6 +72,17 @@ uci set system.@system[0].log_type='file'
 uci commit system; /etc/init.d/log restart
 ```
 
+**实测结论（2026-11-14）：`log_type='file'` 在本固件上不生效。** `ps` 显示 `logd` 只带 `-S 128`，没有 `-O <file>`，日志不会写进 `log_file`（写入的 256 字节后不再增长）。因此推荐的做法是：
+
+```sh
+uci set system.@system[0].log_type='circular'     # 保持 RAM 环形缓冲
+uci delete system.@system[0].log_file
+uci set system.@system[0].log_size='256'          # 缓冲加大，开机日志不易被冲掉
+uci commit system; /etc/init.d/log restart
+```
+
+依靠脚本的两个快照点做持久化即可：开机挂载后 `boot.log`、关机时 `shutdown.log`。日常日志留在 RAM，不写 NAND，省闪存寿命。
+
 重建满额数据卷（会清掉旧数据，按需执行）：
 
 ```sh
@@ -146,7 +157,7 @@ df -h /mnt/data
 | 主题与菜单修补 | `Scripts/Handles.sh` | Argon 配色/背景、Aurora 下拉菜单、Vantage 进度条字体、mini-diskmanager 与 natmapt 菜单位置；用 `FIX` 守卫，目录不存在时自动跳过 |
 | 高通平台 | `Settings.sh` | 配置名含 `WIFI-NO` 时把 DTS 引用切到 `ipq6018/ipq8074-nowifi.dtsi` 以缩小 Q6 固件 |
 | 闲置分区挂载 | `Scripts/Settings.sh` + `Files/` | 把 `Files/etc/init.d/mtd19-data`、`Files/etc/uci-defaults/99-mtd19-data` 安装进 `package/base-files/files/`，开机把 mtd19 建成 UBI 卷挂到 `/mnt/data` |
-| 内存调优 | `Files/etc/uci-defaults/97-ram-tune` + `Files/etc/init.d/homeproxy-ram` | 首启一次：dnsmasq `cachesize=8192`、`log_size=128`、sysctl 网络缓冲与 conntrack；每boot：homeproxy 看板软链到 `/tmp/homeproxy-dashboard` |
+| 内存调优 | `Files/etc/uci-defaults/97-ram-tune` + `Files/etc/init.d/homeproxy-ram` | 首启一次：dnsmasq `cachesize=8192`、`log_size=256`、sysctl 网络缓冲与 conntrack；每boot：homeproxy 看板软链到 `/tmp/homeproxy-dashboard` |
 
 `IPv4-Default.sh` 在 `make defconfig` 之前执行，核心是让生成器跳过 IPv6 分支，并用首启脚本兜底清理：
 
