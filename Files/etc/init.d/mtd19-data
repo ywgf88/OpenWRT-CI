@@ -38,6 +38,21 @@ make_node() {
 	[ -e "$2" ]
 }
 
+# logd 在 S12 就启动，早于本脚本挂载（S99）：那时 /mnt/data 还没挂上，
+# logd 打不开 log_file 会退回 RAM 环形缓冲。挂载成功后把环形日志落盘，
+# 再让 logd 重起一次、改用 /mnt/data 上的文件。
+persist_logs() {
+	LOG_DIR=$DATA_MNT/log
+	mkdir -p "$LOG_DIR" 2>/dev/null || return 0
+	[ -f "$LOG_DIR/boot.log" ] && mv -f "$LOG_DIR/boot.log" "$LOG_DIR/boot.prev.log" 2>/dev/null
+	logread > "$LOG_DIR/boot.log" 2>/dev/null
+	if [ "$(uci -q get system.@system[0].log_type)" = "file" ]; then
+		/etc/init.d/log restart >/dev/null 2>&1
+		logger -t mtd-data "boot log saved, logd switched to file logging"
+	fi
+	return 0
+}
+
 start() {
 	[ -e /proc/mtd ] || return 0
 
@@ -90,10 +105,14 @@ start() {
 		return 1
 	fi
 
+	persist_logs
+
 	return 0
 }
 
 stop() {
+	# 关机前留一份本次运行的完整日志（此时 /mnt/data 还挂着）
+	[ -d "$DATA_MNT/log" ] && logread > "$DATA_MNT/log/shutdown.log" 2>/dev/null
 	grep -q " $DATA_MNT " /proc/mounts && umount "$DATA_MNT"
 	[ -e "/dev/ubi$UBI_DEV" ] && ubidetach -d "$UBI_DEV" >/dev/null 2>&1
 	return 0
