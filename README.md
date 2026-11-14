@@ -29,7 +29,8 @@
 按 **Redmi AX5（RA67，IPQ6000，无 USB / 无 SATA / 无 NVMe / 无 SD / 无声卡）** 的实际硬件做体系化裁剪，目标是压镜像换 overlay。
 
 * **累计从 `Config/GENERAL.txt` 删除 64 行配置**：51 项 USB / 磁盘 / 文件系统类驱动与工具 + 9 项文件共享与分区插件 + 4 项冗余插件（`luci-app-gecoosac`、`stuntman-client`、`luci-proto-relay`、`fullconenat-sonic`）。
-* **连带掉 55 个依赖包**：manifest 包数 `377 → 322`。删一个插件常拉走一串依赖——`samba4` 带走 `gnutls`/`wsdd2`/`libtirpc`，`partexp` 带走 `parted`/`libparted`/`resize2fs`，`gecoosac` 带走 `avahi`/`dbus` 全家，`btrfs-progs` + `kmod-fs-btrfs` 带走一串 `kmod-lib-*`。
+* **连带掉 55 个依赖包**：manifest 包数 `377 → 322`（关闭 `luci-app-fullconenat-sonic` 后为 **320**）。删一个插件常拉走一串依赖——`samba4` 带走 `gnutls`/`wsdd2`/`libtirpc`，`partexp` 带走 `parted`/`libparted`/`resize2fs`，`gecoosac` 带走 `avahi`/`dbus` 全家，`btrfs-progs` + `kmod-fs-btrfs` 带走一串 `kmod-lib-*`。
+* **有些包删配置行没用**：`luci-app-fullconenat-sonic` 和 `fullconenat-sonic` 的 Makefile 里都写了 `DEFAULT:=y if … firewall`，只要 firewall 在就自动启用；要去掉必须在 `.config` 里显式写 `# CONFIG_PACKAGE_xxx is not set`。
 * **镜像体积（2026-11-14 实测）**：`squashfs-sysupgrade.bin` 54.49 MiB → **40.96 MiB（−13.53 MiB）**；`squashfs-factory.ubi` 56.62 MiB → **42.62 MiB（−14.00 MiB）**。
 * **删驱动的收益极小，删插件的收益极大**：单项 kmod 只有几 KB~几十 KB，本次 −13.5 MiB 几乎全部来自插件依赖链。要压体积优先动插件，别动 kmod。
 * **overlay ≈ 72 MiB − squashfs 镜像体积 − UBI 开销**：镜像每减 1 MiB，`/overlay` 约增 1 MiB（实测 −2.15 MiB 镜像换来 +2.1 MiB overlay）。本次预计 overlay 由 9.2 MiB 增至 **约 23 MiB**。
@@ -79,11 +80,11 @@
 | 内核模块 | `kmod-nft-*`（core / nat / offload / tproxy / queue / socket / fib 等）、`kmod-wireguard`、`kmod-tun`、`kmod-mtd-rw`、`kmod-dsa`、`kmod-inet-diag` |
 | 构建开关 | `CONFIG_CCACHE=y`、`CONFIG_DEVEL=y`、`CONFIG_TARGET_MULTI_PROFILE=y`、`CONFIG_TARGET_PER_DEVICE_ROOTFS=y`；关闭 `luci-app-attendedsysupgrade`、`luci-app-wol` 与 `video` / `pon_*` feed |
 | 已移除（无对应硬件） | USB 与存储栈（`kmod-usb-*` 全系、`kmod-usb-storage*`、`usbutils`、`usb-modeswitch`、`libimobiledevice`、`usbmuxd`）、`kmod-ata-*`、`kmod-nvme`、`kmod-fs-btrfs`、`kmod-fs-ksmbd`、`mmc-utils`、`smartmontools`、`nvme-cli`、`kmod-sound-core`、`kmod-usb-audio`、`kmod-bonding`、`kmod-veth`、`coremark` |
-| 已移除（插件与磁盘工具） | `luci-app-samba4`、`luci-app-partexp`、`luci-app-mini-diskmanager`、`luci-app-gecoosac`、`stuntman-client`、`luci-proto-relay`、`fullconenat-sonic`、`luci-app-fullconenat-sonic`；`automount`、`blkid`、`cfdisk`、`fdisk`、`sfdisk`、`cgdisk`、`gdisk`、`sgdisk`、`exfat-fsck`、`exfat-mkfs`、`kmod-fuse` |
+| 已移除（插件与磁盘工具） | `luci-app-samba4`、`luci-app-partexp`、`luci-app-mini-diskmanager`、`luci-app-gecoosac`、`stuntman-client`、`luci-proto-relay`、`luci-app-fullconenat-sonic`（只删 LuCI 页面；内核模块 `fullconenat-sonic` 仍随 firewall 默认启用）；`automount`、`blkid`、`cfdisk`、`fdisk`、`sfdisk`、`cgdisk`、`gdisk`、`sgdisk`、`exfat-fsck`、`exfat-mkfs`、`kmod-fuse` |
 
 **最近一次 Release 实际装入的 LuCI 应用**（取自 manifest，随上游变动，以 Release 说明的「插件列表」为准）
 
-`luci-app-autoreboot` · `firewall` · `fullconenat-sonic` · `homeproxy` · `natmapt` · `package-manager` · `qca-ppe-qos` · `router-tool` · `upnp` · `vantage` · `wolultra`，主题 `luci-theme-vantage`（2026-11-14 22:05 产物，manifest 共 **322** 个包；精简前为 377 个。该产物之后的提交已显式关闭 `luci-app-fullconenat-sonic`，故新镜像不再包含该页与其 `fullconenat-sonic` 内核模块）。
+`luci-app-autoreboot` · `firewall` · `homeproxy` · `natmapt` · `package-manager` · `qca-ppe-qos` · `router-tool` · `upnp` · `vantage` · `wolultra`，主题 `luci-theme-vantage`（2026-11-14 23:23 产物，manifest 共 **320** 个包；精简前为 377 个）。
 
 **`Scripts/Packages.sh` 预置的第三方源**（`UPDATE_PACKAGE` 会先删除 feeds 中的同名目录、再按指定分支克隆到 `package/`，避免版本冲突；是否进入固件仍由 `.config` 决定）
 
@@ -150,6 +151,25 @@ Scripts/                      Packages.sh（插件源）/ Settings.sh（默认�
 6. 大分区机型刷完后自检：`df -h /overlay`（应约 23 MiB）、`df -h /mnt/data`（应约 36.6 MiB）、`logread | grep mtd-data`（可见挂载日志）。
 
 > 若要恢复其他平台：把 `.github/workflows/disabled/` 下对应 yml 移回 `.github/workflows/`，把 `Config/disabled/` 下对应 txt 移回 `Config/`，再核对 `QCA-ALL.yml` 风格的矩阵配置与 `WRT-CORE` 的 `CONFIG_TARGET_*` 解析结果。自用配置按本人设备定制，换设备或换上游分支前请同步检查 `WRT_IP`、`WRT_THEME`、`WRT_SSID` 与脚本里的 sed 目标是否仍匹配上游。
+
+## U-Boot 与分区布局
+
+* **分区大小只由 mibib（`mtd1`）里的 SMEM 表决定，U-Boot 的 `.bin` 不带分区信息。** 换 U-Boot 不会改变 rootfs / overlay 的大小；想改分区必须同时改 mibib。
+* 本机现状：coolsnowwolf（大雕）「不死 uboot + 大分区」一套 —— `mibib.bin` 刷 `mtd1`、`uboot.bin` 刷 `mtd7`，得到 rootfs 72 MiB + overlay 36.6 MiB 的布局。
+* 另一套可选：[uBootKit](https://github.com/chenxin527/uboot-qsdk12.5-build)（开源，高通 QSDK 12.5 `u-boot-2016` 二次开发，覆盖 ipq50xx / ipq53xx / ipq60xx / ipq807x 二十多个机型），产物只有一个 `uboot-ipq60xx-redmi_ax5-*.bin`（约 0.62 MiB），**只覆盖 appsbl（`mtd7`），不含 mibib**。
+
+| 维度 | 大雕不死 uboot + 大分区 | chenxin527 uBootKit |
+| --- | --- | --- |
+| 来源 | 闭源收费包（面包多），单机型定制 | 开源 GPL，源码可编译，GitHub Actions 自动出包 |
+| 提供文件 | `uboot.bin` + `mibib.bin` 两件 | 只有 `uboot.bin`，只写 `mtd7` |
+| 分区 | 自带 mibib，改成大分区（72 + 36.6 MiB） | 沿用现有 mibib / SMEM 表，不改分区；9008 模式下有 MIBIB 自动重载 |
+| 进 Web | 断电按住 Reset 通电 | 任意键按住通电（LED 闪 3 次后常亮）、`failsafe` 环境变量、[uBootEnter](https://github.com/chenxin527/uBootEnter) 中断、9008 自动进、`bootipq` 失败自动进、TTL 手敲 `httpd` |
+| 网络 | 需手动把电脑网卡设到 192.168.1.x | 内置 DHCP 自动分配，并过滤上级路由的 OFFER / ACK 防干扰；进 Web 后可改后台 IP |
+| 界面 | 简易恢复页 | Argon 风格、移动端适配、httpd_debug 日志、传输进度与速率、网页终端 |
+| 可刷固件 | Web 上传 factory `.ubi` | NAND 只支持 factory（`.ubi`），**不支持 sysupgrade**；eMMC 支持 factory + sysupgrade；另有 GL.iNet 官方、部分 ASUSWRT、纯 NOR |
+| 额外 | — | 开机打印机型与 config_name、LED 闪烁提示、修 AX5 京东云版网口 / LED |
+
+> **风险提示**：两套 U-Boot 占的是同一个分区（appsbl / `mtd7`），刷写途中断电两套都没了，只能走 9008（EDL）救砖。uBootKit 的 README 没有给出首次刷入的具体命令，稳妥做法是用现有不死 uboot 的网页上传其 `.bin`，不要照抄来历不明的 `mtd write` 命令。该机改过 1G 内存，属于非原厂配置，刷前确认型号是 `redmi_ax5` 而不是 `redmi_ax5-jdcloud`。
 
 ## 相关资源
 
