@@ -3,10 +3,7 @@ CONFIG_PACKAGE_luci-app-homeproxy=y
 #增加插件
 CONFIG_PACKAGE_luci-app-autoreboot=y
 CONFIG_PACKAGE_luci-app-gecoosac=y
-CONFIG_PACKAGE_luci-app-mini-diskmanager=y
 CONFIG_PACKAGE_luci-app-natmapt=y
-CONFIG_PACKAGE_luci-app-partexp=y
-CONFIG_PACKAGE_luci-app-samba4=y
 CONFIG_PACKAGE_luci-app-upnp=y
 CONFIG_PACKAGE_luci-app-wolultra=y
 #删除插件
@@ -23,7 +20,6 @@ CONFIG_TARGET_PER_DEVICE_ROOTFS=y
 CONFIG_TARGET_ROOTFS_INITRAMFS=n
 #内核调整
 CONFIG_PACKAGE_kmod-dsa=y
-CONFIG_PACKAGE_kmod-fuse=y
 CONFIG_PACKAGE_kmod-inet-diag=y
 CONFIG_PACKAGE_kmod-mtd-rw=y
 CONFIG_PACKAGE_kmod-netlink-diag=y
@@ -46,13 +42,9 @@ CONFIG_PACKAGE_kmod-tun=y
 CONFIG_PACKAGE_kmod-wireguard=y
 #组件调整
 CONFIG_PACKAGE_autocore=y
-CONFIG_PACKAGE_automount=y
-CONFIG_PACKAGE_blkid=y
-CONFIG_PACKAGE_cfdisk=y
 CONFIG_PACKAGE_cpufreq=y
 CONFIG_PACKAGE_curl=y
 CONFIG_PACKAGE_dmesg=y
-CONFIG_PACKAGE_fdisk=y
 CONFIG_PACKAGE_fullconenat-sonic=y
 CONFIG_PACKAGE_htop=y
 CONFIG_PACKAGE_iperf3=y
@@ -68,6 +60,5 @@ CONFIG_PACKAGE_nand-utils=y
 CONFIG_PACKAGE_openssh-keygen=y
 CONFIG_PACKAGE_openssh-sftp-server=y
 CONFIG_PACKAGE_openssl-util=y
-CONFIG_PACKAGE_sfdisk=y
 CONFIG_PACKAGE_stuntman-client=y
 CONFIG_PACKAGE_xz-utils=y
