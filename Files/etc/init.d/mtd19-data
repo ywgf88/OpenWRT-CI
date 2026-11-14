@@ -1,0 +1,85 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: MIT
+#
+# 把 mibib 里那块闲置的 "overlay" 分区（Redmi AX5 大分区布局里的 mtd19，约 36.6MiB）
+# 建成独立的 UBI 数据卷，挂载到 /mnt/data。
+#
+# 背景：OpenWrt/ImmortalWrt 只在 "rootfs" 这一块 mtd 上建 ubi0，
+# 另一块 "overlay" 从未被使用（/dev 里没有 ubi1）。
+# 本脚本不改分区表、不动 ubi0，只在闲置分区上建卷，失败也不影响启动。
+
+START=99
+STOP=10
+
+DATA_MNT=/mnt/data
+UBI_DEV=1
+VOL_NAME=data
+MIN_SIZE=$((8 * 1024 * 1024))
+
+find_mtd_overlay() {
+	awk '/^mtd/ {
+		split($1, a, ":")
+		n = a[1]
+		sub("mtd", "", n)
+		if (index($0, "\"overlay\"")) print n
+	}' /proc/mtd
+}
+
+mtd_size() {
+	awk -v k="mtd$1:" '$1 == k { print $2 }' /proc/mtd
+}
+
+start() {
+	[ -e /proc/mtd ] || return 0
+
+	# 只在本机（Redmi AX5）执行，其它机型的 "overlay" 分区可能有别的用途
+	BOARD=$(cat /tmp/sysinfo/board_name 2>/dev/null)
+	[ "$BOARD" = "redmi,ax5" ] || return 0
+
+	MTD=$(find_mtd_overlay)
+	[ -n "$MTD" ] || { logger -t mtd-data "no overlay partition, skip"; return 0; }
+	[ -c "/dev/mtd$MTD" ] || return 0
+
+	SIZE_HEX=$(mtd_size "$MTD")
+	[ -n "$SIZE_HEX" ] || return 0
+	SIZE=$((0x$SIZE_HEX))
+	[ "$SIZE" -ge "$MIN_SIZE" ] || { logger -t mtd-data "overlay too small, skip"; return 0; }
+
+	mkdir -p "$DATA_MNT"
+	grep -q " $DATA_MNT " /proc/mounts && return 0
+
+	if [ ! -e "/dev/ubi$UBI_DEV" ]; then
+		if ! ubiattach -m "$MTD" -d "$UBI_DEV" >/dev/null 2>&1; then
+			# 分区上还没有 UBI 头，首次格式化（只影响这块闲置分区）
+			logger -t mtd-data "mtd$MTD has no ubi header, formatting once"
+			ubiformat -q -y "/dev/mtd$MTD" >/dev/null 2>&1 || {
+				logger -t mtd-data "ubiformat failed"
+				return 1
+			}
+			ubiattach -m "$MTD" -d "$UBI_DEV" >/dev/null 2>&1 || {
+				logger -t mtd-data "ubiattach failed"
+				return 1
+			}
+		fi
+	fi
+
+	[ -e "/dev/ubi${UBI_DEV}_0" ] || ubimkvol "/dev/ubi$UBI_DEV" -N "$VOL_NAME" -m >/dev/null 2>&1
+	[ -e "/dev/ubi${UBI_DEV}_0" ] || { logger -t mtd-data "mkvol failed"; return 1; }
+
+	# 空卷首次挂载时由内核自动初始化 UBIFS，无需 mkfs.ubifs
+	mount -t ubifs "ubi${UBI_DEV}_0" "$DATA_MNT" >/dev/null 2>&1
+	if grep -q " $DATA_MNT " /proc/mounts; then
+		logger -t mtd-data "mounted ubi${UBI_DEV}_0 on $DATA_MNT"
+	else
+		logger -t mtd-data "mount failed"
+		return 1
+	fi
+
+	return 0
+}
+
+stop() {
+	grep -q " $DATA_MNT " /proc/mounts && umount "$DATA_MNT"
+	[ -e "/dev/ubi$UBI_DEV" ] && ubidetach -d "$UBI_DEV" >/dev/null 2>&1
+	return 0
+}

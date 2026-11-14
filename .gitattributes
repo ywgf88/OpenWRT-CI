@@ -1,2 +1,3 @@
 *.txt text eol=lf
 *.sh text eol=lf
+Files/** text eol=lf

@@ -1,0 +1,11 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+#
+# 首次启动时自动启用 mtd19-data 服务并立即挂载一次。
+# sysupgrade 保留配置时 rc.d 链接已存在，本脚本不会再执行；
+# 不保留配置刷机时会重新执行一次。
+
+/etc/init.d/mtd19-data enable
+/etc/init.d/mtd19-data start
+
+exit 0

@@ -54,3 +54,13 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 		echo "qualcommax set up nowifi successfully!"
 	fi
 fi
+
+#把 mtd19 闲置分区做成 /mnt/data（Redmi AX5 大分区布局）
+CI_FILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Files"
+if [ -d "$CI_FILES" ]; then
+	install -d ./package/base-files/files/etc/init.d ./package/base-files/files/etc/uci-defaults
+	install -m 0755 "$CI_FILES/etc/init.d/mtd19-data" ./package/base-files/files/etc/init.d/mtd19-data
+	install -m 0755 "$CI_FILES/etc/uci-defaults/99-mtd19-data" ./package/base-files/files/etc/uci-defaults/99-mtd19-data
+	sed -i 's/\r$//' ./package/base-files/files/etc/init.d/mtd19-data ./package/base-files/files/etc/uci-defaults/99-mtd19-data
+	echo "mtd19-data installed!"
+fi
