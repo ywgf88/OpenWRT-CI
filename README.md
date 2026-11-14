@@ -67,6 +67,8 @@ df -h /mnt/data
 
 **自动挂载复测**：`umount /mnt/data` 后执行 `/etc/init.d/mtd19-data restart`，脚本能自行重新挂上（无需手工 `mount`），说明开机路径可用。`mount` 输出里的 `assert=read-only` 是 UBIFS 的内部标志，实际挂载仍是 `rw`。
 
+**重启自检（已完成）**：`reboot` 后 `up 1 min` 时 `/mnt/data` 已自动挂载（`ubi1_0` 28.2M，用 24.0K），`/etc/rc.d/S99mtd19-data -> ../init.d/mtd19-data` 自启链接存在。至此“编译进固件 → 刷机 → 开机自动挂载”全链路验证通过。
+
 ## 编译流水线
 
 | Workflow | 触发方式 | 作用 |
