@@ -4,10 +4,11 @@ CONFIG_PACKAGE_luci-app-homeproxy=y
 CONFIG_PACKAGE_luci-app-autoreboot=y
 CONFIG_PACKAGE_luci-app-natmapt=y
 CONFIG_PACKAGE_luci-app-upnp=y
-CONFIG_PACKAGE_luci-app-wolultra=y
 #删除插件
 CONFIG_PACKAGE_luci-app-attendedsysupgrade=n
 CONFIG_PACKAGE_luci-app-wol=n
+#超级网络唤醒（WOL Ultra）
+# CONFIG_PACKAGE_luci-app-wolultra is not set
 #参数调整
 CONFIG_CCACHE=y
 CONFIG_DEVEL=y
