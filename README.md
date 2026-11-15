@@ -1,6 +1,6 @@
 # OpenWRT-CI · ImmortalWrt 云编译自用仓库
 
-自用的 ImmortalWrt GitHub Actions 云编译仓库，源码基于 [VIKINGYFY/immortalwrt](https://github.com/VIKINGYFY/immortalwrt) 的 `owrt` 分支（上游为 [immortalwrt/immortalwrt](https://github.com/immortalwrt/immortalwrt)）。编译核心抽成可复用的 `WRT-CORE.yml`，各平台 workflow 通过矩阵传入配置与默认参数。固件默认**仅 IPv4**、默认主题 **Vantage**、默认管理地址 **192.168.100.1**，成品发布在本仓库 [Releases](../../releases)。
+自用的 ImmortalWrt GitHub Actions 云编译仓库，源码基于 [VIKINGYFY/immortalwrt](https://github.com/VIKINGYFY/immortalwrt) 的 `owrt` 分支（上游为 [immortalwrt/immortalwrt](https://github.com/immortalwrt/immortalwrt)）。编译核心抽成可复用的 `WRT-CORE.yml`，各平台 workflow 通过矩阵传入配置与默认参数。固件默认**仅 IPv4**、默认主题 **Vantage**、默认管理地址 **192.168.8.1**，成品发布在本仓库 [Releases](../../releases)。
 
 > 当前仅启用 **qualcommax / IPQ60XX** 一条流水线（Redmi AX5）。AIROHA、MTK、OWRT(ROCKCHIP/X86)、QCB 等平台 workflow 与对应配置已移入 `disabled/` 目录，不参与编译。
 
@@ -11,7 +11,7 @@
 | 设备平台 | `qualcommax` / `ipq60xx`，配置 `CONFIG_TARGET_DEVICE_qualcommax_ipq60xx_DEVICE_redmi_ax5=y`（Redmi AX5） |
 | 源码 | `VIKINGYFY/immortalwrt` @ `owrt` |
 | 配置文件 | `Config/IPQ60XX-WIFI-YES.txt`（设备与精简项）+ `Config/GENERAL.txt`（全平台公共项） |
-| 默认管理地址 | **192.168.100.1**，用户名 `root`，默认**空密码**（首次登录请立即设置） |
+| 默认管理地址 | **192.168.8.1**，用户名 `root`，默认**空密码**（首次登录请立即设置） |
 | 默认主题 | **Vantage**（`anothaDev/luci-theme-vantage`）；`Scripts/Packages.sh` 另预置 Argon / Aurora / Fluent / Footstrap / Kucat / Shadcn 源码，改 `WRT_THEME` 即可切换 |
 | 默认主机名 | `OWRT` |
 | 默认 Wi-Fi | SSID `OWRT`，密码 `12345678` |
@@ -115,7 +115,7 @@ df -h /mnt/data
 | `PACKAGE` | 空 | 追加 `CONFIG_PACKAGE_*=y` 等条目到 `.config`，多项用 `\n` 分隔 |
 | `TEST` | `false` | 只生成并上传 `Config-*.txt`，跳过下载、编译与固件打包 |
 
-传给 `WRT-CORE` 的默认参数：`WRT_THEME=vantage`、`WRT_NAME=OWRT`、`WRT_SSID=OWRT`、`WRT_WORD=12345678`、`WRT_IP=192.168.100.1`、`WRT_PW=无`、`WRT_BRANCH=owrt`。
+传给 `WRT-CORE` 的默认参数：`WRT_THEME=vantage`、`WRT_NAME=OWRT`、`WRT_SSID=OWRT`、`WRT_WORD=12345678`、`WRT_IP=192.168.8.1`、`WRT_PW=无`、`WRT_BRANCH=owrt`。
 
 > **定时说明**：现行启用的 workflow 均没有 `schedule` 项，编译由 `Auto-Clean` 的 `workflow_run` 或手动 `workflow_dispatch` 触发。旧版 README 中「每天早上 5 点自动编译」在目前配置下不成立；如需定时，在 `Auto-Clean.yml` 或 `QCA-ALL.yml` 的 `on:` 中自行加入 `schedule: - cron: ...`（注意 GitHub Actions 的 cron 为 UTC）。
 
@@ -197,7 +197,7 @@ Scripts/                      Packages.sh（插件源）/ Settings.sh（默认�
 2. 进入 **Actions** → **QCA-ALL** → **Run workflow**；需要临时加包时填 `PACKAGE`，只想核对配置时勾 `TEST`。
 3. 编译完成后在 **Releases** 下载对应文件：升级用 `*squashfs-sysupgrade.bin`，首次刷入用 `*squashfs-factory.ubi`。同批的 `Config-*.txt` 与 `.manifest` 可用于复核。
 4. Release tag 格式为 `<CONFIG>-<INFO>-<BRANCH>-<DATE>`，例如 `IPQ60XX-WIFI-YES-VIKINGYFY-owrt-26.11.14-19.06.52`。
-5. 首次登录 `http://192.168.100.1`，用户名 `root`、密码为空，请立即设置密码并按需修改 Wi-Fi。
+5. 首次登录 `http://192.168.8.1`，用户名 `root`、密码为空，请立即设置密码并按需修改 Wi-Fi。
 6. 大分区机型刷完后自检：`df -h /overlay`（应约 23 MiB）、`df -h /mnt/data`（应约 36.6 MiB）、`logread | grep mtd-data`（可见挂载日志）。
 
 > 若要恢复其他平台：把 `.github/workflows/disabled/` 下对应 yml 移回 `.github/workflows/`，把 `Config/disabled/` 下对应 txt 移回 `Config/`，再核对 `QCA-ALL.yml` 风格的矩阵配置与 `WRT-CORE` 的 `CONFIG_TARGET_*` 解析结果。自用配置按本人设备定制，换设备或换上游分支前请同步检查 `WRT_IP`、`WRT_THEME`、`WRT_SSID` 与脚本里的 sed 目标是否仍匹配上游。
