@@ -79,9 +79,8 @@ UPDATE_PACKAGE "netwizard" "sirpdboy/luci-app-netwizard" "main"
 UPDATE_PACKAGE "partexp" "sirpdboy/luci-app-partexp" "main"
 UPDATE_PACKAGE "timecontrol" "sirpdboy/luci-app-timecontrol" "main"
 
-#状态温度与消息推送（CONFIG_PACKAGE_* 见 Config/GENERAL.txt）
+#状态温度（CONFIG_PACKAGE_* 见 Config/GENERAL.txt）
 UPDATE_PACKAGE "temp-status" "gSpotx2f/luci-app-temp-status" "master"
-UPDATE_PACKAGE "wechatpush" "tty228/luci-app-wechatpush" "master"
 
 UPDATE_PACKAGE "natmapt" "muink/openwrt-natmapt" "master"
 UPDATE_PACKAGE "stuntman" "muink/openwrt-stuntman" "master"

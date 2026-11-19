@@ -128,7 +128,7 @@ df -h /mnt/data
 | 代理 / 分流 | `luci-app-homeproxy`、`sing-box`（在设备 config 中启用）、`luci-app-natmapt` |
 | 系统 / 运维 | `luci-app-autoreboot`、`luci-app-upnp`、`htop`、`iperf3`、`curl`、`ip-full`、`lsblk`、`nand-utils`、`xz-utils`、`openssh-sftp-server` |
 | 轻量监控 / 运维（本次新增） | `btop`（资源监控）、`luci-app-nlbwmon`（按设备流量统计）、`vnstat2`（接口流量日志）、`luci-app-watchcat`（断网自愈）、`luci-app-ttyd`（网页终端）、`luci-app-filebrowser`（文件管理） |
-| 状态温度 / 推送（本次新增） | `luci-app-temp-status`（状态页温度）、`luci-app-wechatpush` + `luci-i18n-wechatpush-zh-cn`（微信/Telegram/邮件通知） |
+| 状态温度（本次新增） | `luci-app-temp-status`（状态页温度） |
 | 内核模块 | `kmod-nft-*`（core / nat / offload / tproxy / queue / socket / fib 等）、`kmod-wireguard`、`kmod-tun`、`kmod-mtd-rw`、`kmod-dsa`、`kmod-inet-diag` |
 | 构建开关 | `CONFIG_CCACHE=y`、`CONFIG_DEVEL=y`、`CONFIG_TARGET_MULTI_PROFILE=y`、`CONFIG_TARGET_PER_DEVICE_ROOTFS=y`；`luci-app-attendedsysupgrade` 显式关闭，`video` / `pon_*` feed 未启用；WOL 相关（`luci-app-wol`、`luci-app-wolultra`、`etherwake`）已全部不在构建里 |
 | 已移除（无对应硬件） | USB 与存储栈（`kmod-usb-*` 全系、`kmod-usb-storage*`、`usbutils`、`usb-modeswitch`、`libimobiledevice`、`usbmuxd`）、`kmod-ata-*`、`kmod-nvme`、`kmod-fs-btrfs`、`kmod-fs-ksmbd`、`mmc-utils`、`smartmontools`、`nvme-cli`、`kmod-sound-core`、`kmod-usb-audio`、`kmod-bonding`、`kmod-veth`、`coremark` |
@@ -143,7 +143,7 @@ df -h /mnt/data
 - 主题：`argon` / `aurora` / `aurora-config` / `fluent` / `footstrap` / `kucat` / `kucat-config` / `shadcn` / `vantage`
 - 代理：`momo`、`nikki`、`openclash`、`passwall`（`passwall2` 一行已注释）
 - 工具与网络：`diskmanager`、`easytier`、`qmodem`、`VIKINGYFY/packages`、`diskman`、`mosdns`、`openlist2`、`qbittorrent`、`quickfile`、`ddns-go`、`netspeedtest`、`netwizard`、`partexp`、`timecontrol`、`natmapt`、`stuntman`、LianXia233 系列（风扇 / 模组 / 网络监控等）
-- 状态温度 / 推送（本次新增）：`luci-app-temp-status`（`gSpotx2f/luci-app-temp-status@master`）、`luci-app-wechatpush`（`tty228/luci-app-wechatpush@master`）
+- 状态温度（本次新增）：`luci-app-temp-status`（`gSpotx2f/luci-app-temp-status@master`）
 - `UPDATE_VERSION` 可从上游最新 Release 拉取版本号与哈希，默认未启用
 
 > `Config/IPQ60XX-WIFI-YES.txt` 只保留 `sing-box` 作为 HomeProxy 内核，未启用 `passwall2` / `xray-core`，目的是压缩固件体积。`Scripts/PRIVATE.sh` 与 `Config/PRIVATE.txt` 若存在会被自动加载（当前仓库未提交），适合放不便公开的私有插件与配置项。
