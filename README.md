@@ -19,8 +19,8 @@
 | 中文界面 | `CONFIG_LUCI_LANG_zh_Hans=y` |
 | 产物 | `*-squashfs-factory.ubi`（首次刷入）、`*-squashfs-sysupgrade.bin`（升级）、`.manifest`、`Config-*.txt` |
 | 版本标识 | `WRT_DATE` 以 `TZ=UTC-8` 取**编译开始时刻**，写入文件名、Release tag 与 LuCI 页脚，便于对照上游 commit |
-| 内核 | 随上游浮动，以 Release 说明中的「内核版本」为准（2026-11-14 产物为 `6.18.60`） |
-| 镜像体积 | 精简后 `squashfs-sysupgrade.bin` **40.96 MiB**、`squashfs-factory.ubi` **42.62 MiB**（精简前 54.49 / 56.62 MiB） |
+| 内核 | 随上游浮动，以 Release 说明中的「内核版本」为准（2026-11-19 产物为 `6.18.60`） |
+| 镜像体积 | 当前 `squashfs-sysupgrade.bin` **43.00 MiB**、`squashfs-factory.ubi` **44.75 MiB**（2026-11-19 产物；纯精简版曾为 40.96 / 42.62 MiB，后因集成 7 个监控运维插件回升约 2 MiB；精简前为 54.49 / 56.62 MiB） |
 
 > `WRT_PW` 仅为 Release 文案里的提示字段，修改它**不会**改变固件登录密码；密码始终需要首次登录后自行设置。产物按平台打包，刷机前请核对设备型号、分区布局与 factory/sysupgrade 用途。
 
@@ -31,7 +31,7 @@
 * **累计从 `Config/GENERAL.txt` 删除 64 行配置**：51 项 USB / 磁盘 / 文件系统类驱动与工具 + 9 项文件共享与分区插件 + 4 项冗余插件（`luci-app-gecoosac`、`stuntman-client`、`luci-proto-relay`、`fullconenat-sonic`）。
 * **连带掉 55 个依赖包**：manifest 包数 `377 → 322`（关闭 `luci-app-fullconenat-sonic` 后为 **320**）。删一个插件常拉走一串依赖——`samba4` 带走 `gnutls`/`wsdd2`/`libtirpc`，`partexp` 带走 `parted`/`libparted`/`resize2fs`，`gecoosac` 带走 `avahi`/`dbus` 全家，`btrfs-progs` + `kmod-fs-btrfs` 带走一串 `kmod-lib-*`。
 * **有些包删配置行没用**：`luci-app-fullconenat-sonic` 和 `fullconenat-sonic` 的 Makefile 里都写了 `DEFAULT:=y if … firewall`，只要 firewall 在就自动启用；要去掉必须在 `.config` 里显式写 `# CONFIG_PACKAGE_xxx is not set`。
-* **镜像体积（2026-11-14 实测）**：`squashfs-sysupgrade.bin` 54.49 MiB → **40.96 MiB（−13.53 MiB）**；`squashfs-factory.ubi` 56.62 MiB → **42.62 MiB（−14.00 MiB）**。
+* **镜像体积（2026-11-14 精简实测）**：`squashfs-sysupgrade.bin` 54.49 MiB → **40.96 MiB（−13.53 MiB）**；`squashfs-factory.ubi` 56.62 MiB → **42.62 MiB（−14.00 MiB）**。此为纯精简基线；2026-11-19 集成 7 个监控运维插件后回升至 43.00 / 44.75 MiB（仍比精简前小约 11.5 MiB）。
 * **删驱动的收益极小，删插件的收益极大**：单项 kmod 只有几 KB~几十 KB，本次 −13.5 MiB 几乎全部来自插件依赖链。要压体积优先动插件，别动 kmod。
 * **overlay ≈ 72 MiB − squashfs 镜像体积 − UBI 开销**：镜像每减 1 MiB，`/overlay` 约增 1 MiB（实测 −2.15 MiB 镜像换来 +2.1 MiB overlay）。40.96 MiB 镜像刷入后 **`/overlay` 实测 21.7 MiB（可用 20.5 MiB）**，此前为 9.2 MiB。
 * **1G 内存调优（随固件首启生效）**：`Files/etc/uci-defaults/97-ram-tune` 把 dnsmasq 缓存 1500 → 8192、日志环缓冲 → 128KB、内核 `rmem/wmem` 提到 16 MiB、`nf_conntrack_max` 提到 65536；`Files/etc/init.d/homeproxy-ram` 把 homeproxy 看板（约 8 MiB）重定向到 `/tmp`，**用 8 MiB 内存换 8 MiB flash**。
@@ -127,8 +127,8 @@ df -h /mnt/data
 | --- | --- |
 | 代理 / 分流 | `luci-app-homeproxy`、`sing-box`（在设备 config 中启用）、`luci-app-natmapt` |
 | 系统 / 运维 | `luci-app-autoreboot`、`luci-app-upnp`、`htop`、`iperf3`、`curl`、`ip-full`、`lsblk`、`nand-utils`、`xz-utils`、`openssh-sftp-server` |
-| 轻量监控 / 运维（本次新增） | `btop`（资源监控）、`luci-app-nlbwmon`（按设备流量统计）、`vnstat2`（接口流量日志）、`luci-app-watchcat`（断网自愈）、`luci-app-ttyd`（网页终端）、`luci-app-filebrowser`（文件管理） |
-| 状态温度（本次新增） | `luci-app-temp-status`（状态页温度） |
+| 轻量监控 / 运维（2026-11-19 集成） | `btop`（资源监控）、`luci-app-nlbwmon`（按设备流量统计）、`vnstat2`（接口流量日志）、`luci-app-watchcat`（断网自愈）、`luci-app-ttyd`（网页终端）、`luci-app-filebrowser`（文件管理） |
+| 状态温度（2026-11-19 集成） | `luci-app-temp-status`（状态页温度） |
 | 内核模块 | `kmod-nft-*`（core / nat / offload / tproxy / queue / socket / fib 等）、`kmod-wireguard`、`kmod-tun`、`kmod-mtd-rw`、`kmod-dsa`、`kmod-inet-diag` |
 | 构建开关 | `CONFIG_CCACHE=y`、`CONFIG_DEVEL=y`、`CONFIG_TARGET_MULTI_PROFILE=y`、`CONFIG_TARGET_PER_DEVICE_ROOTFS=y`；`luci-app-attendedsysupgrade` 显式关闭，`video` / `pon_*` feed 未启用；WOL 相关（`luci-app-wol`、`luci-app-wolultra`、`etherwake`）已全部不在构建里 |
 | 已移除（无对应硬件） | USB 与存储栈（`kmod-usb-*` 全系、`kmod-usb-storage*`、`usbutils`、`usb-modeswitch`、`libimobiledevice`、`usbmuxd`）、`kmod-ata-*`、`kmod-nvme`、`kmod-fs-btrfs`、`kmod-fs-ksmbd`、`mmc-utils`、`smartmontools`、`nvme-cli`、`kmod-sound-core`、`kmod-usb-audio`、`kmod-bonding`、`kmod-veth`、`coremark` |
@@ -136,14 +136,14 @@ df -h /mnt/data
 
 **最近一次 Release 实际装入的 LuCI 应用**（取自 manifest，随上游变动，以 Release 说明的「插件列表」为准）
 
-`luci-app-autoreboot` · `firewall` · `homeproxy` · `natmapt` · `package-manager` · `qca-ppe-qos` · `router-tool` · `upnp` · `vantage`，主题 `luci-theme-vantage`（2026-11-15 17:17 产物，manifest 共 **317** 个包；精简前为 377 个，11-15 00:28 那版还有 320 个。`luci-app-wolultra` 及其 `-zh-cn` 语言包、`etherwake` 依赖均已不在产物中）。
+`autoreboot` · `filebrowser` · `firewall` · `homeproxy` · `natmapt` · `nlbwmon` · `package-manager` · `qca-ppe-qos` · `router-tool` · `temp-status` · `ttyd` · `upnp` · `vantage` · `watchcat`，另有命令行工具 `btop` / `vnstat2`，主题 `luci-theme-vantage`（2026-11-19 18:59 产物 `IPQ60XX-WIFI-YES-VIKINGYFY-owrt-26.11.19-18.59.59`，manifest 共 **338** 个包；精简前为 377 个，11-15 那版为 317 个。7 个监控运维插件均已装入，`wechatpush`、`luci-app-wolultra` 及其 `-zh-cn` 语言包、`etherwake` 依赖均不在产物中）。
 
 **`Scripts/Packages.sh` 预置的第三方源**（`UPDATE_PACKAGE` 会先删除 feeds 中的同名目录、再按指定分支克隆到 `package/`，避免版本冲突；是否进入固件仍由 `.config` 决定）
 
 - 主题：`argon` / `aurora` / `aurora-config` / `fluent` / `footstrap` / `kucat` / `kucat-config` / `shadcn` / `vantage`
 - 代理：`momo`、`nikki`、`openclash`、`passwall`（`passwall2` 一行已注释）
 - 工具与网络：`diskmanager`、`easytier`、`qmodem`、`VIKINGYFY/packages`、`diskman`、`mosdns`、`openlist2`、`qbittorrent`、`quickfile`、`ddns-go`、`netspeedtest`、`netwizard`、`partexp`、`timecontrol`、`natmapt`、`stuntman`、LianXia233 系列（风扇 / 模组 / 网络监控等）
-- 状态温度（本次新增）：`luci-app-temp-status`（`gSpotx2f/luci-app-temp-status@master`）
+- 状态温度（2026-11-19 集成）：`luci-app-temp-status`（`gSpotx2f/luci-app-temp-status@master`）
 - `UPDATE_VERSION` 可从上游最新 Release 拉取版本号与哈希，默认未启用
 
 > `Config/IPQ60XX-WIFI-YES.txt` 只保留 `sing-box` 作为 HomeProxy 内核，未启用 `passwall2` / `xray-core`，目的是压缩固件体积。`Scripts/PRIVATE.sh` 与 `Config/PRIVATE.txt` 若存在会被自动加载（当前仓库未提交），适合放不便公开的私有插件与配置项。
