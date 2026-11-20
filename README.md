@@ -133,10 +133,11 @@ df -h /mnt/data
 | 构建开关 | `CONFIG_CCACHE=y`、`CONFIG_DEVEL=y`、`CONFIG_TARGET_MULTI_PROFILE=y`、`CONFIG_TARGET_PER_DEVICE_ROOTFS=y`；`luci-app-attendedsysupgrade` 显式关闭，`video` / `pon_*` feed 未启用；WOL 相关（`luci-app-wol`、`luci-app-wolultra`、`etherwake`）已全部不在构建里 |
 | 已移除（无对应硬件） | USB 与存储栈（`kmod-usb-*` 全系、`kmod-usb-storage*`、`usbutils`、`usb-modeswitch`、`libimobiledevice`、`usbmuxd`）、`kmod-ata-*`、`kmod-nvme`、`kmod-fs-btrfs`、`kmod-fs-ksmbd`、`mmc-utils`、`smartmontools`、`nvme-cli`、`kmod-sound-core`、`kmod-usb-audio`、`kmod-bonding`、`kmod-veth`、`coremark` |
 | 已移除（插件与磁盘工具） | `luci-app-wolultra`（超级网络唤醒，连带 `etherwake` 依赖）、`luci-app-samba4`、`luci-app-partexp`、`luci-app-mini-diskmanager`、`luci-app-gecoosac`、`stuntman-client`、`luci-proto-relay`、`luci-app-fullconenat-sonic`（只删 LuCI 页面；内核模块 `fullconenat-sonic` 仍随 firewall 默认启用）；`automount`、`blkid`、`cfdisk`、`fdisk`、`sfdisk`、`cgdisk`、`gdisk`、`sgdisk`、`exfat-fsck`、`exfat-mkfs`、`kmod-fuse` |
+| 已移除（无对应硬件，2026-11-20） | `qca-ppe-qos`、`luci-app-qca-ppe-qos`、`luci-i18n-qca-ppe-qos-zh-cn`（高通 PPE 硬件 QoS，依赖 NSS/PPE 卸载路径；AX5 主线固件无此硬件，配置生效后不再装入） |
 
 **最近一次 Release 实际装入的 LuCI 应用**（取自 manifest，随上游变动，以 Release 说明的「插件列表」为准）
 
-`autoreboot` · `filebrowser` · `firewall` · `homeproxy` · `natmapt` · `nlbwmon` · `package-manager` · `qca-ppe-qos` · `router-tool` · `temp-status` · `ttyd` · `upnp` · `vantage` · `watchcat`，另有命令行工具 `btop` / `vnstat2`，主题 `luci-theme-vantage`（2026-11-19 18:59 产物 `IPQ60XX-WIFI-YES-VIKINGYFY-owrt-26.11.19-18.59.59`，manifest 共 **338** 个包；精简前为 377 个，11-15 那版为 317 个。7 个监控运维插件均已装入，`wechatpush`、`luci-app-wolultra` 及其 `-zh-cn` 语言包、`etherwake` 依赖均不在产物中）。
+`autoreboot` · `filebrowser` · `firewall` · `homeproxy` · `natmapt` · `nlbwmon` · `package-manager` · `qca-ppe-qos` · `router-tool` · `temp-status` · `ttyd` · `upnp` · `vantage` · `watchcat`，另有命令行工具 `btop` / `vnstat2`，主题 `luci-theme-vantage`（2026-11-19 18:59 产物 `IPQ60XX-WIFI-YES-VIKINGYFY-owrt-26.11.19-18.59.59`，manifest 共 **338** 个包；精简前为 377 个，11-15 那版为 317 个。7 个监控运维插件均已装入，`wechatpush`、`luci-app-wolultra` 及其 `-zh-cn` 语言包、`etherwake` 依赖均不在产物中。注：此清单为 11-19 已发布产物，`qca-ppe-qos` 系列已于 11-20 从配置移除，下次编译后不再装入）。
 
 **`Scripts/Packages.sh` 预置的第三方源**（`UPDATE_PACKAGE` 会先删除 feeds 中的同名目录、再按指定分支克隆到 `package/`，避免版本冲突；是否进入固件仍由 `.config` 决定）
 
